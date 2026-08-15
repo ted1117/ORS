@@ -54,6 +54,8 @@ class ORSClient:
             ) from e
         except httpx.TimeoutException as e:
             raise ORSTimeoutError("ORS API request timed out") from e
+        except httpx.RequestError as e:
+            raise ORSHTTPError("ORS API request failed") from e
 
         return parse_response(response.text)
 
