@@ -1,4 +1,5 @@
 from datetime import date
+from urllib.parse import unquote
 
 import httpx
 
@@ -10,7 +11,7 @@ class ORSClient:
     """영등위 비디오물 등급분류정보 조회 API 클라이언트"""
 
     def __init__(self, api_key: str, base_url: str, timeout: float = 10.0):
-        self.api_key = api_key
+        self.api_key = unquote(api_key)
         self._client = httpx.AsyncClient(
             base_url=base_url,
             timeout=timeout,
