@@ -6,7 +6,10 @@ from src.ors.schemas import VideoRating, VideoRatingPage
 
 
 def parse_response(xml: str) -> VideoRatingPage:
-    root = ElementTree.fromstring(xml)
+    try:
+        root = ElementTree.fromstring(xml)
+    except ElementTree.ParseError as e:
+        raise ORSResponseError("Failed to parse ORS response XML") from e
 
     header = root.find("header")
     body = root.find("body")
