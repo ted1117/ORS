@@ -1,3 +1,5 @@
+from datetime import date
+
 import httpx
 
 from src.ors.parser import parse_response
@@ -25,8 +27,8 @@ class ORSClient:
         company_name: str,
         page: int = 1,
         page_size: int = 100,
-        start_date: str | None = None,
-        end_date: str | None = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
     ) -> VideoRatingPage:
 
         params = {
@@ -37,9 +39,9 @@ class ORSClient:
         }
 
         if start_date is not None:
-            params["stDate"] = start_date
+            params["stDate"] = start_date.strftime("%Y%m%d")
         if end_date is not None:
-            params["edDate"] = end_date
+            params["edDate"] = end_date.strftime("%Y%m%d")
 
         response = await self._client.get("/video_search_v2", params=params)
         response.raise_for_status()
