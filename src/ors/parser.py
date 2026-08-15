@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from xml.etree import ElementTree
 
 from .schemas import VideoRating, VideoRatingPage
@@ -32,29 +32,33 @@ def parse_response(xml: str) -> VideoRatingPage:
 def _parse_item(element: ElementTree.Element) -> VideoRating:
     return VideoRating(
         title=element.findtext("useTitle", ""),
-        original_title=element.findtext("oriTitle"),
+        original_title=_parse_optional_text(element.findtext("oriTitle")),
         rating_number=element.findtext("rtNo", ""),
         rating_date=_parse_date(element.findtext("rtDate")),
         grade=element.findtext("gradeName", ""),
         applicant_name=element.findtext("aplcName", ""),
-        producer_name=element.findtext("prodcName"),
-        production_country=element.findtext("prodcNatnlName"),
+        producer_name=_parse_optional_text(element.findtext("prodcName")),
+        production_country=_parse_optional_text(element.findtext("prodcNatnlName")),
         production_year=_parse_int(element.findtext("prodYear")),
-        kind=element.findtext("kindName"),
-        running_time=element.findtext("screTime"),
-        director_name=element.findtext("direName"),
-        lead_actor_name=element.findtext("leadaName"),
-        content=element.findtext("workCont"),
-        core_harm_reason=element.findtext("rtCoreHarmRsnNm"),
+        kind=_parse_optional_text(element.findtext("kindName")),
+        running_time=_parse_optional_text(element.findtext("screTime")),
+        director_name=_parse_optional_text(element.findtext("direName")),
+        lead_actor_name=_parse_optional_text(element.findtext("leadaName")),
+        content=_parse_optional_text(element.findtext("workCont")),
+        core_harm_reason=_parse_optional_text(element.findtext("rtCoreHarmRsnNm")),
     )
 
 
-def _parse_date(value: str | None):
+def _parse_optional_text(value: str | None) -> str | None:
+    return value or None
+
+
+def _parse_date(value: str | None) -> date | None:
     if not value:
         return None
 
     return datetime.strptime(value, "%Y%m%d").date()
 
 
-def _parse_int(value: str | None):
+def _parse_int(value: str | None) -> int | None:
     return int(value) if value else None
