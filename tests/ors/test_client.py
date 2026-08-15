@@ -5,7 +5,7 @@ import httpx
 import pytest
 
 from src.ors.client import ORSClient
-from src.ors.exceptions import ORSHTTPError, ORSResponseError
+from src.ors.exceptions import ORSHTTPError, ORSResponseError, ORSTimeoutError
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
@@ -81,6 +81,52 @@ async def test_fetch_http_error():
         with pytest.raises(
             ORSHTTPError, match="ORS API request failed with status code 500"
         ):
+            await client.fetch(
+                company_name="크런치롤코리아 유한회사",
+            )
+
+
+@pytest.mark.anyio
+async def test_fetch_timeout_error():
+    async def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ReadTimeout("request timed out", request=request)
+
+    transport = httpx.MockTransport(handler)
+
+    async with ORSClient(
+        api_key="test-api-key",
+        base_url="https://example.com",
+    ) as client:
+        await client._client.aclose()
+        client._client = httpx.AsyncClient(
+            base_url="https://example.com",
+            transport=transport,
+        )
+
+        with pytest.raises(ORSTimeoutError, match="ORS API request timed out"):
+            await client.fetch(
+                company_name="크런치롤코리아 유한회사",
+            )
+
+
+@pytest.mark.anyio
+async def test_fetch_request_error():
+    async def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("connection refused", request=request)
+
+    transport = httpx.MockTransport(handler)
+
+    async with ORSClient(
+        api_key="test-api-key",
+        base_url="https://example.com",
+    ) as client:
+        await client._client.aclose()
+        client._client = httpx.AsyncClient(
+            base_url="https://example.com",
+            transport=transport,
+        )
+
+        with pytest.raises(ORSHTTPError, match="ORS API request failed"):
             await client.fetch(
                 company_name="크런치롤코리아 유한회사",
             )
