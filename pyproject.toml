@@ -7,6 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "fastapi[standard]>=0.141.1",
     "httpx>=0.28.1",
+    "pytest>=9.1.1",
     "ruff>=0.16.3",
 ]
 
@@ -33,3 +34,10 @@ ignore = [
 quote-style = "double"
 indent-style = "space"
 line-ending = "auto"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.hatch.build.targets.wheel]
+
+packages = ["src/ors"]
