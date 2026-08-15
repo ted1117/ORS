@@ -5,6 +5,7 @@ import httpx
 import pytest
 
 from src.ors.client import ORSClient
+from src.ors.exceptions import ORSHTTPError, ORSResponseError
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
@@ -77,7 +78,9 @@ async def test_fetch_http_error():
             transport=transport,
         )
 
-        with pytest.raises(httpx.HTTPStatusError):
+        with pytest.raises(
+            ORSHTTPError, match="ORS API request failed with status code 500"
+        ):
             await client.fetch(
                 company_name="크런치롤코리아 유한회사",
             )
@@ -115,7 +118,7 @@ async def test_fetch_ors_error():
         )
 
         with pytest.raises(
-            ValueError,
+            ORSResponseError,
             match="ORS API error: 99 INVALID_REQUEST",
         ):
             await client.fetch(

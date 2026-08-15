@@ -1,7 +1,8 @@
 from datetime import date, datetime
 from xml.etree import ElementTree
 
-from .schemas import VideoRating, VideoRatingPage
+from src.ors.exceptions import ORSResponseError
+from src.ors.schemas import VideoRating, VideoRatingPage
 
 
 def parse_response(xml: str) -> VideoRatingPage:
@@ -11,13 +12,13 @@ def parse_response(xml: str) -> VideoRatingPage:
     body = root.find("body")
 
     if header is None or body is None:
-        raise ValueError("Invalid ORS response")
+        raise ORSResponseError("Invalid ORS response")
 
     result_code = header.findtext("resultCode")
 
     if result_code != "00":
         result_message = header.findtext("resultMsg")
-        raise ValueError(f"ORS API error: {result_code} {result_message}")
+        raise ORSResponseError(f"ORS API error: {result_code} {result_message}")
 
     items = [_parse_item(element) for element in body.findall("./items/item")]
 

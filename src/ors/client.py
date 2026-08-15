@@ -3,6 +3,7 @@ from urllib.parse import unquote
 
 import httpx
 
+from src.ors.exceptions import ORSHTTPError, ORSTimeoutError
 from src.ors.parser import parse_response
 from src.ors.schemas import VideoRatingPage
 
@@ -44,8 +45,15 @@ class ORSClient:
         if end_date is not None:
             params["edDate"] = end_date.strftime("%Y%m%d")
 
-        response = await self._client.get("/video_search_v2", params=params)
-        response.raise_for_status()
+        try:
+            response = await self._client.get("/video_search_v2", params=params)
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            raise ORSHTTPError(
+                f"ORS API request failed with status code {e.response.status_code}"
+            ) from e
+        except httpx.TimeoutException as e:
+            raise ORSTimeoutError("ORS API request timed out") from e
 
         return parse_response(response.text)
 

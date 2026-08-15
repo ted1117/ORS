@@ -1,9 +1,10 @@
 from datetime import date
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from src.core.config import settings
 from src.ors.client import ORSClient
+from src.ors.exceptions import ORSHTTPError, ORSResponseError
 from src.ors.schemas import VideoRatingPage
 
 router = APIRouter()
@@ -22,10 +23,15 @@ async def get_video_ratings(
         base_url=settings.ors_api_base_url,
         timeout=settings.ors_api_timeout,
     ) as client:
-        return await client.fetch(
-            company_name=company_name,
-            start_date=start_date,
-            end_date=end_date,
-            page=page,
-            page_size=page_size,
-        )
+        try:
+            return await client.fetch(
+                company_name=company_name,
+                start_date=start_date,
+                end_date=end_date,
+                page=page,
+                page_size=page_size,
+            )
+        except (ORSHTTPError, ORSResponseError) as e:
+            raise HTTPException(
+                status_code=502, detail="ORS API request failed."
+            ) from e
