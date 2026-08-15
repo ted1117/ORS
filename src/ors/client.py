@@ -1,7 +1,12 @@
 import httpx
 
+from src.ors.parser import parse_response
+from src.ors.schemas import VideoRatingPage
 
-class OrsClient:
+
+class ORSClient:
+    """영등위 비디오물 등급분류정보 조회 API 클라이언트"""
+
     def __init__(self, api_key: str, base_url: str, timeout: float = 10.0):
         self.api_key = api_key
         self._client = httpx.AsyncClient(
@@ -9,17 +14,34 @@ class OrsClient:
             timeout=timeout,
         )
 
-    async def fetch(self, company_name: str, page: int = 1, page_size: int = 100):
-        response = await self._client.get(
-            "/video_search_v2",
-            paraps={
-                "service_key": self.api_key,
-                "pageNo": page,
-                "numOfRows": page_size,
-                "aplcName": company_name,
-            },
-        )
+    async def __aenter__(self):
+        return self
 
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        await self._client.aclose()
+
+    async def fetch(
+        self,
+        company_name: str,
+        page: int = 1,
+        page_size: int = 100,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> VideoRatingPage:
+
+        params = {
+            "serviceKey": self.api_key,
+            "pageNo": page,
+            "numOfRows": page_size,
+            "aplcName": company_name,
+        }
+
+        if start_date is not None:
+            params["stDate"] = start_date
+        if end_date is not None:
+            params["edDate"] = end_date
+
+        response = await self._client.get("/video_search_v2", params=params)
         response.raise_for_status()
 
         return parse_response(response.text)
