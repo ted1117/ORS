@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException
 
 from src.core.config import settings
 from src.ors.client import ORSClient
-from src.ors.exceptions import ORSHTTPError, ORSResponseError
+from src.ors.exceptions import ORSHTTPError, ORSResponseError, ORSTimeoutError
 from src.ors.schemas import VideoRatingPage
 
 router = APIRouter()
@@ -31,7 +31,7 @@ async def get_video_ratings(
                 page=page,
                 page_size=page_size,
             )
-        except (ORSHTTPError, ORSResponseError) as e:
+        except (ORSHTTPError, ORSResponseError, ORSTimeoutError) as e:
             raise HTTPException(
                 status_code=502, detail="ORS API request failed."
             ) from e
