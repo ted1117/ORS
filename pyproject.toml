@@ -43,6 +43,9 @@ line-ending = "auto"
 [tool.pytest.ini_options]
 pythonpath = ["."]
 asyncio_mode = "auto"
+markers = [
+    "integration: requires TEST_DB_URL pointing to a migrated PostgreSQL database",
+]
 
 [tool.hatch.build.targets.wheel]
 
