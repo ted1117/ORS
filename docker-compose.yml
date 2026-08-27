@@ -17,5 +17,72 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: ors-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  celery-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ors-celery-worker
+    restart: unless-stopped
+    command:
+      - celery
+      - -A
+      - src.celery_app:celery_app
+      - worker
+      - --loglevel=INFO
+      - --concurrency=1
+    environment:
+      ORS_API_KEY: ${ORS_API_KEY:-}
+      ORS_API_BASE_URL: ${ORS_API_BASE_URL:-}
+      DB_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/ors
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      ORS_SYNC_COMPANIES: ${ORS_SYNC_COMPANIES:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ors-celery-beat
+    restart: unless-stopped
+    command:
+      - celery
+      - -A
+      - src.celery_app:celery_app
+      - beat
+      - --loglevel=INFO
+    environment:
+      ORS_API_KEY: ${ORS_API_KEY:-}
+      ORS_API_BASE_URL: ${ORS_API_BASE_URL:-}
+      DB_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/ors
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      ORS_SYNC_COMPANIES: ${ORS_SYNC_COMPANIES:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
 volumes:
   postgres_data:
+  redis_data:
